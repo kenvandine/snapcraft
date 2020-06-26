@@ -66,7 +66,6 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "npm": v2.NpmPlugin,
             "python": v2.PythonPlugin,
             "rust": v2.RustPlugin,
-            "flutter": v2.FlutterPlugin,
         },
     }
 else:
