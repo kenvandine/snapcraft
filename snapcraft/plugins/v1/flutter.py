@@ -143,11 +143,6 @@ class FlutterPlugin(PluginV1):
         env = os.environ.copy()
         return env
 
-    @property
-    def plugin_stage_packages(self):
-        stage_packages = ["libegl-mesa0"]
-        return stage_packages
-
     @property  # type: ignore
     def stage_packages(self):
         return super().stage_packages + self.plugin_stage_packages
