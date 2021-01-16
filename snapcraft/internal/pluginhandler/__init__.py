@@ -114,9 +114,7 @@ class PluginHandler:
         else:
             self.source_handler = None
 
-        self.build_environment = _list_of_dicts_to_env(
-            self._part_properties["build-environment"]
-        )
+        self.build_environment = grammar_processor.get_build_environment()
 
         self._build_attributes = BuildAttributes(
             self._part_properties["build-attributes"]
@@ -459,6 +457,7 @@ class PluginHandler:
                     package_names=stage_packages,
                     base=self._project._get_build_base(),
                     stage_packages_path=self.stage_packages_path,
+                    target_arch=self._project._get_stage_packages_target_arch(),
                 )
             except repo.errors.PackageNotFoundError as e:
                 raise errors.StagePackageDownloadError(self.name, e.message)
@@ -630,8 +629,8 @@ class PluginHandler:
         else:
             plugin_environment = dict()
 
-        # Part's (user) say.
-        user_build_environment = self._part_properties["build-environment"]
+        # User's say.
+        user_build_environment = self.build_environment
 
         # Create the script.
         with io.StringIO() as run_environment:
@@ -1397,7 +1396,9 @@ def _generate_include_set(directory, includes):
         else:
             include_files |= set([os.path.join(directory, include)])
 
-    include_dirs = [x for x in include_files if os.path.isdir(x)]
+    include_dirs = [
+        x for x in include_files if os.path.isdir(x) and not os.path.islink(x)
+    ]
     include_files = set([os.path.relpath(x, directory) for x in include_files])
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
@@ -1559,15 +1560,3 @@ def _combine_filesets(starting_fileset, modifying_fileset):
         return list(set(starting_fileset + modifying_fileset))
     else:
         return modifying_fileset
-
-
-def _list_of_dicts_to_env(l: List[Dict[str, str]]) -> List[str]:
-    env = []  # type: List[str]
-
-    # We're iterating anyway, but thanks to the schema validation, we can rest assured
-    # that each dict only has one key/value pair.
-    for d in l:
-        for key, value in d.items():
-            env.append('{}="{}"'.format(key, value))
-
-    return env
